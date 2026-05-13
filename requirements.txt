@@ -5,6 +5,7 @@ torch>=2.0.0
 transformers>=4.40.0
 datasets>=2.18.0
 sentencepiece>=0.2.0
+huggingface_hub>=0.23.0
 
 # Optimization / Multi-GPU
 accelerate>=0.28.0
@@ -12,9 +13,6 @@ accelerate>=0.28.0
 # Metrics
 seqeval>=1.2.2
 scikit-learn>=1.4.0
-
-# Vietnamese Word Segmentation
-py-vncorenlp>=0.1.4
 
 # CRF Layer for BiLSTM-CRF
 pytorch-crf>=0.7.2

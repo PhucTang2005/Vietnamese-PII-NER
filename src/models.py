@@ -21,6 +21,7 @@ from typing import Dict, Optional
 
 import torch
 import torch.nn as nn
+from huggingface_hub import snapshot_download
 from torchcrf import CRF
 from src.config import (
     BILSTM_DROPOUT,
@@ -33,6 +34,19 @@ from src.config import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_checkpoint_dir(checkpoint_dir: str) -> Path:
+    """Return a local checkpoint directory, downloading HF Hub repos if needed."""
+    ckpt_path = Path(checkpoint_dir)
+    if ckpt_path.exists():
+        return ckpt_path
+
+    if "/" in checkpoint_dir:
+        downloaded_path = snapshot_download(repo_id=checkpoint_dir)
+        return Path(downloaded_path)
+
+    return ckpt_path
 
 
 # ==============================================================================
@@ -215,7 +229,7 @@ class BiLSTMForNER(nn.Module):
         Returns:
             Loaded BiLSTMForNER instance.
         """
-        ckpt_path = Path(checkpoint_dir)
+        ckpt_path = _resolve_checkpoint_dir(checkpoint_dir)
 
         with open(ckpt_path / "config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
@@ -418,7 +432,7 @@ class BiLSTMCRFForNER(nn.Module):
             The model is returned in training mode. Call ``model.eval()``
             before running inference to disable dropout.
         """
-        ckpt_path = Path(checkpoint_dir)
+        ckpt_path = _resolve_checkpoint_dir(checkpoint_dir)
 
         with open(ckpt_path / "config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
