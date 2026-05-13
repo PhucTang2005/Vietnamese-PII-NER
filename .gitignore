@@ -1,0 +1,25 @@
+# Python and environments
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+
+# Large Model Checkpoints
+best_model_*/
+checkpoints/
+
+# Downloaded tools
+vncorenlp/
+
+# Unwanted files
+test.py
+tokenize/
+data/
