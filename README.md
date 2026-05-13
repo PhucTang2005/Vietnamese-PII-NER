@@ -1,136 +1,186 @@
-# Vietnamese PII Detection (Nhận diện Dữ liệu Cá nhân Tiếng Việt)
+# 🔍 Vietnamese PII Detection — Named Entity Recognition
 
-Dự án phát triển các mô hình nhận dạng thực thể có tên (NER) chuyên biệt để phát hiện 54 loại dữ liệu cá nhân (PII) trong văn bản tiếng Việt. Dự án hỗ trợ 4 kiến trúc mô hình khác nhau: **BiLSTM**, **BiLSTM-CRF**, **PhoBERT-base**, và **XLM-RoBERTa**.
+A modular NER system for detecting **54 types of Personally Identifiable Information (PII)** in Vietnamese text. The project supports four model architectures trained and evaluated on the [`quynong/cs419-data`](https://huggingface.co/datasets/quynong/cs419-data) dataset.
 
-## Hiệu năng mô hình
+## Problem Statement
 
-Kết quả thử nghiệm trên tập test (`quynong/cs419-data`):
+Personally Identifiable Information (PII) — such as names, phone numbers, email addresses, national IDs, and bank accounts — is embedded in unstructured Vietnamese text across documents, chat logs, and web content. Automatically detecting and classifying these entities is critical for data privacy compliance, anonymization pipelines, and secure data handling.
 
-| Model | NER Precision | NER Recall | NER F1 | Classification F1 |
-|---|---|---|---|---|
-| **BiLSTM** | 0.9161 | 0.9329 | 0.9244 | 0.9990 |
-| **BiLSTM-CRF** | 0.9439 | 0.9475 | 0.9457 | 0.9991 |
-| **PhoBERT-base** | 0.9551 | 0.9630 | 0.9590 | 1.0000 |
-| **XLM-RoBERTa** | 0.9579 | 0.9645 | **0.9612** | **1.0000** |
+This project frames PII detection as a **token-level Named Entity Recognition (NER)** task using the **BIO tagging scheme** (109 labels: `O` + 54 entity types × `B-`/`I-` prefixes).
 
----
+## Pipeline Overview
 
-## Section 1: Quick Start (End User)
-
-Truy cập **HuggingFace Space** bên dưới để thử nghiệm trực tiếp trên trình duyệt,
-không cần cài đặt bất cứ thứ gì:
-
-👉 **[Mở Demo tại đây](https://huggingface.co/spaces/Phuc2005/pii-demo-ner)**
-
-**Hướng dẫn sử dụng:**
-1. Nhập đoạn văn bản tiếng Việt vào ô **"Văn bản đầu vào"**
-2. Nhấn nút **"Trích xuất PII"**
-3. Kết quả sẽ hiển thị các thực thể được tô màu kèm nhãn phân loại
-
-> Nếu lần đầu truy cập Space bị chậm (~30 giây), đây là do server đang khởi động lại — chờ thêm một chút rồi thử lại.
-
----
-
-## Section 2: Developer Guide
-
-Phần này dành cho các nhà phát triển muốn clone repository, huấn luyện lại mô hình, hoặc tinh chỉnh code.
-
-### 2.1 Cài đặt
-
-1. Clone repository:
-```bash
-git clone https://github.com/your-username/pii-ner-vietnamese.git
-cd pii-ner-vietnamese
+```
+Raw Vietnamese Text
+        │
+        ▼
+┌─────────────────────┐
+│   Tokenization      │  PhoBERT tokenizer (BiLSTM, BiLSTM-CRF, PhoBERT)
+│                     │  XLM-R tokenizer   (XLM-RoBERTa)
+└─────────┬───────────┘
+          ▼
+┌─────────────────────┐
+│  Token-Level NER    │  BiLSTM → Linear → argmax
+│  Model Inference    │  BiLSTM → Linear → CRF Viterbi decode
+│                     │  PhoBERT / XLM-R → Linear → argmax
+└─────────┬───────────┘
+          ▼
+┌─────────────────────┐
+│  BIO Tag Merging    │  Merge B-/I- spans → character-level entities
+└─────────┬───────────┘
+          ▼
+  List of PII Entities
+  [{"label": "PHONE", "text": "0912345678", "start": 35, "end": 45}]
 ```
 
-2. Cài đặt các thư viện cần thiết:
+## Model Performance
+
+Evaluated on the test split of `quynong/cs419-data`:
+
+| Model | Precision | Recall | **F1** | Classification F1 |
+|---|---|---|---|---|
+| BiLSTM | 0.9161 | 0.9329 | 0.9244 | 0.9990 |
+| BiLSTM-CRF | 0.9439 | 0.9475 | 0.9457 | 0.9991 |
+| PhoBERT-base | 0.9551 | 0.9630 | 0.9590 | 1.0000 |
+| **XLM-RoBERTa** | **0.9579** | **0.9645** | **0.9612** | **1.0000** |
+
+## HuggingFace Models
+
+| Model | HuggingFace Hub |
+|---|---|
+| PhoBERT-base | [`Phuc2005/pii-phobert-base-ner`](https://huggingface.co/Phuc2005/pii-phobert-base-ner) |
+| XLM-RoBERTa | [`Phuc2005/pii-xlm-r-base-ner`](https://huggingface.co/Phuc2005/pii-xlm-r-base-ner) |
+| BiLSTM | [`Phuc2005/pii-bilstm-ner`](https://huggingface.co/Phuc2005/pii-bilstm-ner) |
+| BiLSTM-CRF | [`Phuc2005/pii-bilstm-crf-ner`](https://huggingface.co/Phuc2005/pii-bilstm-crf-ner) |
+
+---
+
+## 🚀 Quick Start — Try Without Installing
+
+Try the live demo on HuggingFace Spaces — no setup required:
+
+👉 **[Open Demo](https://huggingface.co/spaces/Phuc2005/pii-demo-ner)**
+
+1. Enter Vietnamese text in the input box
+2. Click **"⚡ Trích xuất PII"**
+3. Detected PII entities will be highlighted with labels
+
+> If the Space is slow on first visit (~30s), the server is cold-starting — wait and retry.
+
+---
+
+## 📓 Training on Google Colab (Recommended)
+
+Each notebook is self-contained: it clones the repo, installs dependencies, tokenizes data, trains the model, evaluates, and runs inference — all in one file.
+
+Click the badge to open directly in Google Colab:
+
+| Model | Notebook | Open in Colab |
+|---|---|---|
+| **XLM-RoBERTa** | `finetune_xlm_r_base_ner.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/PhucTang2005/Vietnamese-PII-NER/blob/main/notebooks/finetune_xlm_r_base_ner.ipynb) |
+| **PhoBERT-base** | `finetune_phobert_ner.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/PhucTang2005/Vietnamese-PII-NER/blob/main/notebooks/finetune_phobert_ner.ipynb) |
+| **BiLSTM** | `train_bilstm_ner.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/PhucTang2005/Vietnamese-PII-NER/blob/main/notebooks/train_bilstm_ner.ipynb) |
+| **BiLSTM-CRF** | `train_bilstm_crf_ner.ipynb` | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/PhucTang2005/Vietnamese-PII-NER/blob/main/notebooks/train_bilstm_crf_ner.ipynb) |
+
+### How to Use the Notebooks
+
+Each notebook follows the same structure with numbered sections:
+
+| Section | What It Does | Cells to Run |
+|---|---|---|
+| **§1 Setup** | Clones the repo, installs dependencies | Run once — Colab may restart |
+| **§2 Load Dataset** | Loads `quynong/cs419-data` from HuggingFace | Run once |
+| **§3 Tokenization** | Tokenizes raw text, aligns BIO labels | Run once |
+| **§4 Model Definition** | Initializes the model architecture | Run once |
+| **§5 Training** | Trains the model (GPU recommended) | Run once (takes 10–40 min) |
+| **§6 Evaluation** | Computes NER F1, precision, recall | Run once |
+| **§7 Inference** | Loads the pretrained model from HF Hub and runs on sample text | **Run this section alone for quick testing** |
+| **§8 Save & Export** | Saves trained model to checkpoint directory | Optional |
+
+> **💡 Quick Inference Only:** If you just want to test a pretrained model without training, run **§1 Setup** → **§2 Load Dataset** (to build `id2label`) → skip to **§7 Inference**. The inference cell downloads the model from HuggingFace Hub automatically.
+
+---
+
+## 🖥️ Local Development
+
+### Installation
+
 ```bash
+git clone https://github.com/PhucTang2005/Vietnamese-PII-NER.git
+cd Vietnamese-PII-NER
 pip install -r requirements.txt
 ```
 
-### 2.2 Huấn luyện mô hình (Training)
+### Inference via CLI
 
-Repository hỗ trợ huấn luyện 4 mô hình thông qua một script duy nhất `src/train.py`.
-
-**Cách 1: Train XLM-RoBERTa (Tokenize dữ liệu từ đầu)**
 ```bash
+# XLM-RoBERTa (recommended — no Java required)
+python -m inference.run_inference --model_type xlmr --text "Vui lòng chuyển 500.000 VNĐ vào STK 123456789 của Lê Văn B."
+
+
+### Training via CLI
+
+```bash
+# Train XLM-RoBERTa (tokenize from scratch)
 python -m src.train --model_type xlmr --tokenize_from_scratch --save_tokenized
+
+# Train PhoBERT
+python -m src.train --model_type phobert --epochs 5 --lr 5e-5
+
+# Train BiLSTM-CRF
+python -m src.train --model_type bilstm-crf --epochs 15 --batch_size 32
 ```
 
-**Cách 2: Train PhoBERT (Ghi đè siêu tham số)**
-```bash
-python -m src.train --model_type phobert --epochs 10 --lr 3e-5
-```
-
-**Cách 3: Train BiLSTM-CRF**
-```bash
-python -m src.train --model_type bilstm-crf --batch_size 32
-```
-
-### 2.3 Chạy Suy luận (Inference)
-
-Sử dụng script `inference/run_inference.py` để chạy dự đoán trên văn bản thô. Pipeline này sẽ tự động xử lý các bước như word segmentation (nếu cần), offset mapping, và CRF decoding (nếu dùng mô hình CRF).
-> ⚠️ PhoBERT, BiLSTM, BiLSTM-CRF yêu cầu Java JDK 11+.
-> Khuyến nghị chạy trên Google Colab (xem mục 2.4).
+### Gradio Web Demo (Local)
 
 ```bash
-# Dùng XLM-R (tải trực tiếp từ HuggingFace Hub)
-python -m inference.run_inference \
-    --model_type xlmr \
-    --text "Vui lòng chuyển 500.000 VNĐ vào STK 123456789 của Lê Văn B."
-
-# Dùng BiLSTM-CRF (từ local checkpoint)
-python -m inference.run_inference \
-    --model_type bilstm-crf \
-    --model_path ./checkpoints/best_model_bilstm-crf \
-    --text "Tài khoản email của tôi là example@gmail.com"
+python app.py
+# Opens at http://127.0.0.1:7860
 ```
 
-### 2.4 Hướng dẫn chạy trên Google Colab (Khuyên dùng)
-
-Google Colab là môi trường lý tưởng nhất để chạy và huấn luyện các mô hình này vì đã được cài đặt sẵn Linux và Java.
-
-1. **Mở một notebook mới trên Google Colab** (chọn runtime GPU nếu muốn train).
-2. **Chạy các lệnh sau trong một cell:**
-
-```bash
-# Clone repository
-!git clone https://github.com/your-username/pii-ner-vietnamese.git
-%cd pii-ner-vietnamese
-
-# Cài đặt thư viện
-!pip install -r requirements.txt
-```
-
-3. **Chạy thử mô hình PhoBERT (hoặc bất kỳ mô hình nào):**
-
-```bash
-!python -m inference.run_inference \
-    --model_type phobert \
-    --text "Xin chào, tôi là Nguyễn Văn An, số điện thoại 0912345678."
-```
-
-### 2.5 Các vấn đề gặp phải trên Windows local
-
-Lưu ý (Dành cho mô hình PhoBERT, BiLSTM và BiLSTM-CRF): Cả 3 mô hình này đều dùng chung pipeline tiền xử lý và yêu cầu thư viện `py-vncorenlp` để phân mảnh từ. Bạn cần cài đặt Java (JDK 11+) và thiết lập biến môi trường `JAVA_HOME` nếu muốn train/inference trên máy tính cá nhân (Windows). Mô hình XLM-RoBERTa là mô hình duy nhất không yêu cầu bước này.
 ---
 
-## Cấu trúc Repository
+## ⚠️ Note on Word Segmentation (VnCoreNLP)
 
-```text
-pii-ner-vietnamese/
-├── src/
-│   ├── config.py         # Siêu tham số, nhãn BIO, đường dẫn
-│   ├── data_loader.py    # Xử lý VnCoreNLP, Tokenization, Label Alignment
-│   ├── models.py         # Custom nn.Module cho BiLSTM và BiLSTM-CRF
-│   ├── train.py          # Script huấn luyện (Trainer API)
-│   └── utils.py          # Tính toán metric (Seqeval, Classification, CRF decode)
-├── inference/
-│   └── run_inference.py  # Pipeline dự đoán cho văn bản thô
-├── notebooks/            # (Archive) Các file Jupyter Notebook gốc
-├── data/
-│   ├── tokenized_phobert/# Dữ liệu đã tokenize cho PhoBERT/BiLSTM
-│   └── tokenized_xlmr/   # Dữ liệu đã tokenize cho XLM-R
-├── app.py                # Gradio UI Demo
-└── requirements.txt      # Dependencies
+The released PhoBERT checkpoint was trained using a **VnCoreNLP-based Vietnamese word segmentation pipeline** to align with PhoBERT's pretraining conventions.
+
+For deployment simplicity and improved portability, the current public training/inference scripts were later simplified to **remove the Java/VnCoreNLP dependency**. All models (BiLSTM, BiLSTM-CRF, PhoBERT) now tokenize raw text directly using the PhoBERT tokenizer without prior word segmentation.
+
+While the tokenizer-only pipeline may introduce minor performance differences, it **significantly improves reproducibility and ease of use** across local environments and Google Colab.
+
+> **XLM-RoBERTa** has never required word segmentation — it processes raw text natively via SentencePiece and consistently achieves the highest F1 score.
+
+---
+
+## Repository Structure
+
 ```
+Vietnamese-PII-NER/
+├── src/
+│   ├── config.py           # Hyperparameters, BIO labels, paths
+│   ├── data_loader.py      # Tokenization & label alignment
+│   ├── models.py           # BiLSTM and BiLSTM-CRF architectures
+│   ├── train.py            # Unified training script (HF Trainer API)
+│   └── utils.py            # Metrics (seqeval, classification, CRF decode)
+├── inference/
+│   └── run_inference.py    # CLI inference pipeline
+├── notebooks/
+│   ├── finetune_xlm_r_base_ner.ipynb
+│   ├── finetune_phobert_ner.ipynb
+│   ├── train_bilstm_ner.ipynb
+│   └── train_bilstm_crf_ner.ipynb
+├── app.py                  # Gradio web demo (XLM-RoBERTa)
+└── requirements.txt
+```
+
+---
+
+## License
+
+This project is for academic and research purposes.
+
+## Acknowledgments
+
+- Dataset: [`quynong/cs419-data`](https://huggingface.co/datasets/quynong/cs419-data)
+- PhoBERT: [VinAI Research](https://github.com/VinAIResearch/PhoBERT)
+- XLM-RoBERTa: [HuggingFace](https://huggingface.co/xlm-roberta-base)
