@@ -35,7 +35,7 @@ Raw Vietnamese Text
 
 ## Model Performance
 
-Evaluated on the test split of `quynong/cs419-data`:
+Evaluated on the validation split of `quynong/cs419-data`:
 
 | Model | Precision | Recall | **F1** | Classification F1 |
 |---|---|---|---|---|
@@ -110,11 +110,10 @@ Each notebook follows the same structure with numbered sections:
 | **§7 Inference** | Loads the pretrained model from HF Hub and runs on sample text | **Run this section alone for quick testing** |
 | **§8 Save & Export** | Saves trained model to checkpoint directory | Optional |
 
-> **🔑 HuggingFace Token Required:** The dataset [`quynong/cs419-data`](https://huggingface.co/datasets/quynong/cs419-data) requires authentication. Before running the notebooks on Google Colab:
+> **💡 HuggingFace Token (Recommended):** [`quynong/cs419-data`](https://huggingface.co/datasets/quynong/cs419-data) is a public dataset but may occasionally prompt for authentication due to rate limits. To avoid this, add a token before running the notebooks on Google Colab:
 > 1. Create a [HuggingFace access token](https://huggingface.co/settings/tokens)
 > 2. In Colab, go to **🔑 Secrets** (left sidebar) → add a secret named `HF_TOKEN` with your token value
 > 3. Toggle the **"Notebook access"** switch ON
->
 > The notebook will automatically read this secret and log in before downloading the dataset.
 
 > **💡 Quick Inference Only:** If you just want to test a pretrained model without training, run **§1 Setup** → **§2 Load Dataset** (to build `id2label`) → skip to **§7 Inference**. The inference cell downloads the model from HuggingFace Hub automatically.
@@ -136,7 +135,7 @@ pip install -r requirements.txt
 ```bash
 # XLM-RoBERTa (recommended — no Java required)
 python -m inference.run_inference --model_type xlmr --text "Vui lòng chuyển 500.000 VNĐ vào STK 123456789 của Lê Văn B."
-
+```
 
 ### Training via CLI
 
