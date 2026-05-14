@@ -53,6 +53,19 @@ Evaluated on the test split of `quynong/cs419-data`:
 | BiLSTM | [`Phuc2005/pii-bilstm-ner`](https://huggingface.co/Phuc2005/pii-bilstm-ner) |
 | BiLSTM-CRF | [`Phuc2005/pii-bilstm-crf-ner`](https://huggingface.co/Phuc2005/pii-bilstm-crf-ner) |
 
+## Dataset
+
+[`quynong/cs419-data`](https://huggingface.co/datasets/quynong/cs419-data) — A Vietnamese PII corpus with 54 entity types, annotated at the character level.
+
+| Split | # Samples | % Has Entity |
+|---|---|---|
+| Train | 54,117 | 55.8% |
+| Validation | 6,014 | 55.9% |
+
+- **109 BIO labels**: `O` + `B-`/`I-` for 54 PII types (person names, national IDs, bank accounts, addresses, emails, IPs, etc.)
+- **Average length**: ~40 tokens/sentence — truncation at `MAX_LENGTH=256` is virtually non-existent (< 0.02%)
+- **~44% of samples contain no entity**, supporting evaluation at both the token level and the sentence level
+
 ---
 
 ## 🚀 Quick Start — Try Without Installing
@@ -96,6 +109,13 @@ Each notebook follows the same structure with numbered sections:
 | **§6 Evaluation** | Computes NER F1, precision, recall | Run once |
 | **§7 Inference** | Loads the pretrained model from HF Hub and runs on sample text | **Run this section alone for quick testing** |
 | **§8 Save & Export** | Saves trained model to checkpoint directory | Optional |
+
+> **🔑 HuggingFace Token Required:** The dataset [`quynong/cs419-data`](https://huggingface.co/datasets/quynong/cs419-data) requires authentication. Before running the notebooks on Google Colab:
+> 1. Create a [HuggingFace access token](https://huggingface.co/settings/tokens)
+> 2. In Colab, go to **🔑 Secrets** (left sidebar) → add a secret named `HF_TOKEN` with your token value
+> 3. Toggle the **"Notebook access"** switch ON
+>
+> The notebook will automatically read this secret and log in before downloading the dataset.
 
 > **💡 Quick Inference Only:** If you just want to test a pretrained model without training, run **§1 Setup** → **§2 Load Dataset** (to build `id2label`) → skip to **§7 Inference**. The inference cell downloads the model from HuggingFace Hub automatically.
 
