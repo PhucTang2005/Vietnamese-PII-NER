@@ -2,6 +2,15 @@
 
 A modular NER system for detecting **54 types of Personally Identifiable Information (PII)** in Vietnamese text. The project supports four model architectures trained and evaluated on the [`quynong/cs419-data`](https://huggingface.co/datasets/quynong/cs419-data) dataset.
 
+
+## ✨ Key Highlights
+
+- Built an end-to-end Vietnamese PII Named Entity Recognition system covering **54 PII entity types** with **109 BIO labels**.
+- Compared **4 architectures**: BiLSTM, BiLSTM-CRF, PhoBERT-base, and XLM-RoBERTa.
+- Achieved the best validation **entity-level F1 of 96.12%** with XLM-RoBERTa.
+- Released trained checkpoints on HuggingFace Hub and deployed an interactive Gradio demo on HuggingFace Spaces.
+- Conducted sample-level, token-level, and entity-type error analysis to explain model behavior beyond aggregate F1 scores.
+
 ## Problem Statement
 
 Personally Identifiable Information (PII) — such as names, phone numbers, email addresses, national IDs, and bank accounts — is embedded in unstructured Vietnamese text across documents, chat logs, and web content. Automatically detecting and classifying these entities is critical for data privacy compliance, anonymization pipelines, and secure data handling.
@@ -33,6 +42,24 @@ Raw Vietnamese Text
   [{"label": "PHONE", "text": "0912345678", "start": 35, "end": 45}]
 ```
 
+
+## 🧑‍💻 My Contributions
+
+- Designed and implemented the full NER pipeline, including tokenization, BIO label alignment, training, evaluation, and inference.
+- Fine-tuned PhoBERT-base and XLM-RoBERTa for Vietnamese PII detection.
+- Implemented BiLSTM and BiLSTM-CRF baselines to compare recurrent and transformer-based approaches.
+- Built a Gradio web demo for real-time PII extraction.
+- Performed error analysis to identify failure patterns such as wrong entity type, boundary errors, false positives, and missed entities.
+
+## 🛠️ Tech Stack
+
+- **Language**: Python
+- **Deep Learning**: PyTorch, HuggingFace Transformers
+- **Models**: BiLSTM, BiLSTM-CRF, PhoBERT-base, XLM-RoBERTa
+- **Evaluation**: seqeval, entity-level F1, sentence-level classification F1, exact-match analysis
+- **Deployment**: Gradio, HuggingFace Spaces, HuggingFace Hub
+- **Experimentation**: Google Colab, local GPU training/inference
+
 ## Model Performance
 
 Evaluated on the validation split of `quynong/cs419-data`:
@@ -43,6 +70,8 @@ Evaluated on the validation split of `quynong/cs419-data`:
 | BiLSTM-CRF | 0.9439 | 0.9475 | 0.9457 | 0.9991 |
 | PhoBERT-base | 0.9551 | 0.9630 | 0.9590 | 1.0000 |
 | **XLM-RoBERTa** | **0.9579** | **0.9645** | **0.9612** | **1.0000** |
+
+> **Note:** Entity-level F1 measures exact entity span and type matching, while Classification F1 evaluates whether a sentence contains PII or not. Therefore, Classification F1 can be very high even when some entity spans or entity types are not perfectly predicted.
 
 ## HuggingFace Models
 
@@ -159,6 +188,25 @@ python app.py
 
 ---
 
+
+## 🔎 Error Analysis
+
+Beyond aggregate F1 scores, this project includes an error analysis pipeline to understand model behavior at multiple levels:
+
+- **Sample-level analysis**: compares per-sample F1 and exact-match results across four models.
+- **Token-level analysis**: groups errors into missed entities, false positives, wrong types, and boundary errors.
+- **Entity-type analysis**: identifies which PII categories are easier or harder for each model.
+- **Case studies**: selects representative examples where all models succeed, all models fail, BiLSTM-CRF fixes BiLSTM, or transformers outperform recurrent models.
+
+Key findings:
+
+- Transformer-based models perform best overall, with PhoBERT and XLM-RoBERTa showing very similar results.
+- BiLSTM-CRF improves over BiLSTM by enforcing more consistent BIO label transitions.
+- Most remaining errors are not complete misses, but **wrong-type errors** between visually similar PII categories such as `DATE` vs `DOB`, `MASKEDNUMBER` vs `CREDITCARDNUMBER`, and crypto address types.
+- Vietnamese PII NER depends on both language understanding and universal patterns such as emails, IPs, URLs, dates, usernames, and account-like numbers.
+
+A concise report is available in [`analysis/PII_NER_Error_Analysis_Report_Clean.pdf`](analysis/PII_NER_Error_Analysis_Report_Clean.pdf). Summary CSV files are also provided in the `analysis/` folder.
+
 ## ⚠️ Note on Word Segmentation (VnCoreNLP)
 
 The released PhoBERT checkpoint was trained using a **VnCoreNLP-based Vietnamese word segmentation pipeline** to align with PhoBERT's pretraining conventions.
@@ -170,6 +218,14 @@ While the tokenizer-only pipeline may introduce minor performance differences, i
 > **XLM-RoBERTa** has never required word segmentation — it processes raw text natively via SentencePiece and consistently achieves the highest F1 score.
 
 ---
+
+
+## ⚠️ Limitations
+
+- The dataset may not fully represent all real-world Vietnamese text distributions.
+- Some entity types have very similar surface patterns, causing type confusion even when the model detects the entity span.
+- Transformer models achieve the best F1 but require more computation than BiLSTM-based models.
+- The public PhoBERT inference pipeline was simplified by removing the VnCoreNLP dependency, which may introduce minor differences from the original word-segmented training setup.
 
 ## Repository Structure
 
@@ -189,6 +245,13 @@ Vietnamese-PII-NER/
 │   ├── train_bilstm_ner.ipynb
 │   └── train_bilstm_crf_ner.ipynb
 ├── app.py                  # Gradio web demo (XLM-RoBERTa)
+├── analysis/               # Summarized error analysis artifacts
+│   ├── README.md
+│   ├── PII_NER_Error_Analysis_Report_Clean.pdf
+│   ├── error_type_breakdown.csv
+│   ├── entity_type_report.csv
+│   ├── difficult_entity_types.csv
+│   └── case_studies_sample.csv
 └── requirements.txt
 ```
 
